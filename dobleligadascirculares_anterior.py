@@ -53,13 +53,12 @@ class ListaDobleCircular:
             nuevo.ant = nuevo
             return True, "Insertado al inicio (primer nodo).", nuevo, nuevo
 
-        antiguo_cabeza = self.cabeza
         nuevo.sig = self.cabeza
         nuevo.ant = self.cola
         self.cabeza.ant = nuevo
         self.cola.sig = nuevo
         self.cabeza = nuevo
-        return True, "Insertado al inicio.", antiguo_cabeza, nuevo
+        return True, "Insertado al inicio.", nuevo, nuevo.sig
 
     def insertar_final(self, valor):
         nuevo = NodoDobleCircular(valor)
@@ -70,13 +69,12 @@ class ListaDobleCircular:
             nuevo.ant = nuevo
             return True, "Insertado al final (primer nodo).", nuevo, nuevo
 
-        antigua_cola = self.cola
         nuevo.ant = self.cola
         nuevo.sig = self.cabeza
         self.cola.sig = nuevo
         self.cabeza.ant = nuevo
         self.cola = nuevo
-        return True, "Insertado al final.", antigua_cola, nuevo
+        return True, "Insertado al final.", self.cola.ant, self.cola
 
     def insertar_antes(self, referencia, valor):
         objetivo = self.buscar_nodo(referencia)
@@ -92,7 +90,7 @@ class ListaDobleCircular:
         nuevo.ant = previo
         nuevo.sig = objetivo
         objetivo.ant = nuevo
-        return True, "Insertado antes del nodo de referencia.", objetivo, nuevo
+        return True, "Insertado antes del nodo de referencia.", previo, objetivo
 
     def insertar_despues(self, referencia, valor):
         objetivo = self.buscar_nodo(referencia)
@@ -134,7 +132,7 @@ class ListaDobleCircular:
 
         eliminado = self.cabeza
         self._eliminar_nodo(eliminado)
-        return True, f"Eliminado inicio: {eliminado.valor}", self.cabeza, eliminado
+        return True, f"Eliminado inicio: {eliminado.valor}", self.cabeza, self.cola
 
     def eliminar_final(self):
         if self.cola is None:
@@ -142,7 +140,7 @@ class ListaDobleCircular:
 
         eliminado = self.cola
         self._eliminar_nodo(eliminado)
-        return True, f"Eliminado final: {eliminado.valor}", self.cola, eliminado
+        return True, f"Eliminado final: {eliminado.valor}", self.cola, self.cabeza
 
     def eliminar_nodo(self, referencia):
         objetivo = self.buscar_nodo(referencia)
@@ -150,8 +148,9 @@ class ListaDobleCircular:
             return False, "No se encontró nodo de referencia.", None, None
 
         previo = objetivo.ant
+        siguiente = objetivo.sig
         self._eliminar_nodo(objetivo)
-        return True, f"Eliminado nodo: {objetivo.valor}", previo, objetivo
+        return True, f"Eliminado nodo: {objetivo.valor}", previo, siguiente
 
     def eliminar_antes(self, referencia):
         objetivo = self.buscar_nodo(referencia)
@@ -162,12 +161,13 @@ class ListaDobleCircular:
             return False, "No hay suficientes nodos para eliminar antes.", None, None
 
         eliminado = objetivo.ant
+        previo = eliminado.ant
         self._eliminar_nodo(eliminado)
         return (
             True,
             f"Eliminado antes de {referencia}: {eliminado.valor}",
+            previo,
             objetivo,
-            eliminado,
         )
 
     def eliminar_despues(self, referencia):
@@ -179,12 +179,13 @@ class ListaDobleCircular:
             return False, "No hay suficientes nodos para eliminar después.", None, None
 
         eliminado = objetivo.sig
+        siguiente = eliminado.sig
         self._eliminar_nodo(eliminado)
         return (
             True,
             f"Eliminado después de {referencia}: {eliminado.valor}",
             objetivo,
-            eliminado,
+            siguiente,
         )
 
 
@@ -292,7 +293,7 @@ class DobleLigadasCircularesVisualizer(tk.Toplevel):
 
         self.punteros = {
             "P": self.lista.cabeza,
-            "Q": self.lista.cabeza,
+            "Q": self.lista.cabeza.sig if self.lista.cabeza else None,
             "F": self.lista.cabeza,
             "T": self.lista.cola,
         }
@@ -355,13 +356,9 @@ class DobleLigadasCircularesVisualizer(tk.Toplevel):
         self.ejecutar_con_referencia(self.lista.eliminar_despues)
 
     def actualizar_punteros(self, p, q):
-        # P = cabecilla (siempre la cabeza de la lista)
-        # Q = el nuevo dato (nodo insertado o procesado)
-        # F = la referencia (nodo anterior o referenciado)
-        # T = el ultimo nodo (siempre la cola de la lista)
-        self.punteros["P"] = self.lista.cabeza
+        self.punteros["P"] = p
         self.punteros["Q"] = q
-        self.punteros["F"] = p
+        self.punteros["F"] = self.lista.cabeza
         self.punteros["T"] = self.lista.cola
 
     def redibujar(self, mensaje, exito=True):
