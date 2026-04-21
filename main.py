@@ -11,7 +11,7 @@ class MainMenu:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Visualizador de Listas Enlazadas")
-        self.root.geometry("560x380")
+        self.root.geometry("800x500")
         self.root.resizable(False, False)
 
         self.active_window = None

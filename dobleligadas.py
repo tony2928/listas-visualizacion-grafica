@@ -36,25 +36,27 @@ class ListaDoble:
 
     def insertar_inicio(self, valor):
         nuevo = NodoDoble(valor)
+        antiguo_cabeza = self.cabeza
         nuevo.sig = self.cabeza
         if self.cabeza:
             self.cabeza.ant = nuevo
         self.cabeza = nuevo
         if self.cola is None:
             self.cola = nuevo
-        return True, "Insertado al inicio.", nuevo, nuevo.sig
+        return True, "Insertado al inicio.", antiguo_cabeza, nuevo
 
     def insertar_final(self, valor):
         nuevo = NodoDoble(valor)
         if self.cola is None:
             self.cabeza = nuevo
             self.cola = nuevo
-            return True, "Insertado al final (primer nodo).", nuevo, None
+            return True, "Insertado al final (primer nodo).", nuevo, nuevo
 
+        antigua_cola = self.cola
         self.cola.sig = nuevo
         nuevo.ant = self.cola
         self.cola = nuevo
-        return True, "Insertado al final.", self.cola.ant, self.cola
+        return True, "Insertado al final.", antigua_cola, nuevo
 
     def insertar_antes(self, referencia, valor):
         objetivo = self.buscar_nodo(referencia)
@@ -70,7 +72,7 @@ class ListaDoble:
         nuevo.ant = previo
         nuevo.sig = objetivo
         objetivo.ant = nuevo
-        return True, "Insertado antes del nodo de referencia.", previo, objetivo
+        return True, "Insertado antes del nodo de referencia.", objetivo, nuevo
 
     def insertar_despues(self, referencia, valor):
         objetivo = self.buscar_nodo(referencia)
@@ -120,7 +122,7 @@ class ListaDoble:
             True,
             f"Eliminado inicio: {eliminado.valor}",
             self.cabeza,
-            self.cabeza.sig if self.cabeza else None,
+            eliminado,
         )
 
     def eliminar_final(self):
@@ -133,7 +135,7 @@ class ListaDoble:
             True,
             f"Eliminado final: {eliminado.valor}",
             self.cola,
-            self.cola.ant if self.cola else None,
+            eliminado,
         )
 
     def eliminar_nodo(self, referencia):
@@ -142,9 +144,8 @@ class ListaDoble:
             return False, "No se encontró nodo de referencia.", None, None
 
         previo = objetivo.ant
-        siguiente = objetivo.sig
         self._eliminar_nodo(objetivo)
-        return True, f"Eliminado nodo: {objetivo.valor}", previo, siguiente
+        return True, f"Eliminado nodo: {objetivo.valor}", previo, objetivo
 
     def eliminar_antes(self, referencia):
         objetivo = self.buscar_nodo(referencia)
@@ -155,13 +156,12 @@ class ListaDoble:
             return False, "No existe nodo anterior al de referencia.", None, None
 
         eliminado = objetivo.ant
-        previo = eliminado.ant
         self._eliminar_nodo(eliminado)
         return (
             True,
             f"Eliminado antes de {referencia}: {eliminado.valor}",
-            previo,
             objetivo,
+            eliminado,
         )
 
     def eliminar_despues(self, referencia):
@@ -173,13 +173,12 @@ class ListaDoble:
             return False, "No existe nodo después del de referencia.", None, None
 
         eliminado = objetivo.sig
-        siguiente = eliminado.sig
         self._eliminar_nodo(eliminado)
         return (
             True,
             f"Eliminado después de {referencia}: {eliminado.valor}",
             objetivo,
-            siguiente,
+            eliminado,
         )
 
 
@@ -246,10 +245,6 @@ class DobleLigadasVisualizer(tk.Toplevel):
             row=1, column=8, padx=4, pady=6
         )
 
-        ttk.Button(controls, text="Regresar al menú", command=self.cerrar).grid(
-            row=1, column=0, columnspan=2, padx=4, pady=6, sticky="we"
-        )
-
         self.canvas = tk.Canvas(root_frame, bg="white", height=420)
         self.canvas.pack(fill="both", expand=True)
 
@@ -260,6 +255,19 @@ class DobleLigadasVisualizer(tk.Toplevel):
         ttk.Label(
             root_frame, textvariable=self.punteros_var, font=("Consolas", 10)
         ).pack(fill="x")
+
+        button_frame = ttk.Frame(root_frame)
+        button_frame.pack(fill="x", pady=(8, 0))
+        ttk.Button(button_frame, text="Regresar al menú", command=self.cerrar).pack(
+            side="left", padx=4, pady=6
+        )
+        ttk.Button(button_frame, text="Cerrar Programa", command=self.cerrar_todo).pack(
+            side="left", padx=4, pady=6
+        )
+
+        ttk.Button(root_frame, text="Cerrar Programa", command=self.cerrar_todo).pack(
+            pady=(6, 6)
+        )
 
     def obtener_valor(self):
         valor = self.valor_entry.get().strip()
@@ -277,6 +285,10 @@ class DobleLigadasVisualizer(tk.Toplevel):
             return None
         return referencia
 
+    def limpiar_campos(self):
+        self.valor_entry.delete(0, tk.END)
+        self.ref_entry.delete(0, tk.END)
+
     def crear_lista(self):
         contenido = self.valor_entry.get().strip()
         self.lista.limpiar()
@@ -287,11 +299,12 @@ class DobleLigadasVisualizer(tk.Toplevel):
 
         self.punteros = {
             "P": self.lista.cabeza,
-            "Q": self.lista.cabeza.sig if self.lista.cabeza else None,
+            "Q": self.lista.cabeza,
             "F": self.lista.cabeza,
             "T": self.lista.cola,
         }
         self.redibujar("Lista creada/reiniciada.")
+        self.limpiar_campos()
 
     def ejecutar_con_valor(self, fn):
         valor = self.obtener_valor()
@@ -300,6 +313,7 @@ class DobleLigadasVisualizer(tk.Toplevel):
         ok, mensaje, p, q = fn(valor)
         self.actualizar_punteros(p, q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def ejecutar_con_referencia(self, fn):
         referencia = self.obtener_referencia()
@@ -308,6 +322,7 @@ class DobleLigadasVisualizer(tk.Toplevel):
         ok, mensaje, p, q = fn(referencia)
         self.actualizar_punteros(p, q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def ejecutar_valor_y_referencia(self, fn):
         valor = self.obtener_valor()
@@ -317,6 +332,7 @@ class DobleLigadasVisualizer(tk.Toplevel):
         ok, mensaje, p, q = fn(referencia, valor)
         self.actualizar_punteros(p, q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def insertar_inicio(self):
         self.ejecutar_con_valor(self.lista.insertar_inicio)
@@ -334,11 +350,13 @@ class DobleLigadasVisualizer(tk.Toplevel):
         ok, mensaje, p, q = self.lista.eliminar_inicio()
         self.actualizar_punteros(p, q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def eliminar_final(self):
         ok, mensaje, p, q = self.lista.eliminar_final()
         self.actualizar_punteros(p, q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def eliminar_nodo(self):
         self.ejecutar_con_referencia(self.lista.eliminar_nodo)
@@ -350,9 +368,13 @@ class DobleLigadasVisualizer(tk.Toplevel):
         self.ejecutar_con_referencia(self.lista.eliminar_despues)
 
     def actualizar_punteros(self, p, q):
-        self.punteros["P"] = p
+        # P = cabecilla (siempre la cabeza de la lista)
+        # Q = el nuevo dato (nodo insertado o procesado)
+        # F = la referencia (nodo anterior o referenciado)
+        # T = el ultimo nodo (siempre la cola de la lista)
+        self.punteros["P"] = self.lista.cabeza
         self.punteros["Q"] = q
-        self.punteros["F"] = self.lista.cabeza
+        self.punteros["F"] = p
         self.punteros["T"] = self.lista.cola
 
     def redibujar(self, mensaje, exito=True):
@@ -449,3 +471,6 @@ class DobleLigadasVisualizer(tk.Toplevel):
     def cerrar(self):
         self.destroy()
         self.on_close()
+
+    def cerrar_todo(self):
+        self.master.quit()

@@ -44,7 +44,7 @@ class ListaSimple:
         self.cabeza = nuevo
         if self.cola is None:
             self.cola = nuevo
-        return True, "Insertado al inicio.", nuevo, nuevo.sig
+        return True, "Insertado al inicio.", nuevo, None
 
     def insertar_final(self, valor):
         nuevo = NodoSimple(valor)
@@ -55,7 +55,7 @@ class ListaSimple:
 
         self.cola.sig = nuevo
         self.cola = nuevo
-        return True, "Insertado al final.", self.cola, None
+        return True, "Insertado al final.", nuevo, None
 
     def insertar_antes(self, referencia, valor):
         anterior, actual = self.buscar_con_anterior(referencia)
@@ -68,7 +68,7 @@ class ListaSimple:
         nuevo = NodoSimple(valor)
         anterior.sig = nuevo
         nuevo.sig = actual
-        return True, "Insertado antes del nodo de referencia.", anterior, actual
+        return True, "Insertado antes del nodo de referencia.", nuevo, actual
 
     def insertar_despues(self, referencia, valor):
         _, actual = self.buscar_con_anterior(referencia)
@@ -80,7 +80,7 @@ class ListaSimple:
         actual.sig = nuevo
         if self.cola == actual:
             self.cola = nuevo
-        return True, "Insertado después del nodo de referencia.", actual, nuevo
+        return True, "Insertado después del nodo de referencia.", nuevo, actual
 
     def eliminar_inicio(self):
         if self.cabeza is None:
@@ -90,7 +90,11 @@ class ListaSimple:
         self.cabeza = self.cabeza.sig
         if self.cabeza is None:
             self.cola = None
-        return True, f"Eliminado inicio: {eliminado.valor}", self.cabeza, None
+        return True, f"Eliminado inicio: {eliminado.valor}", None, eliminado
+
+    def limpiar_campos(self):
+        self.valor_entry.delete(0, tk.END)
+        self.ref_entry.delete(0, tk.END)
 
     def eliminar_final(self):
         if self.cabeza is None:
@@ -99,7 +103,7 @@ class ListaSimple:
         if self.cabeza == self.cola:
             eliminado = self.cabeza
             self.limpiar()
-            return True, f"Eliminado final: {eliminado.valor}", None, None
+            return True, f"Eliminado final: {eliminado.valor}", None, eliminado
 
         anterior = self.cabeza
         while anterior.sig != self.cola:
@@ -108,7 +112,7 @@ class ListaSimple:
         eliminado = self.cola
         anterior.sig = None
         self.cola = anterior
-        return True, f"Eliminado final: {eliminado.valor}", anterior, None
+        return True, f"Eliminado final: {eliminado.valor}", None, eliminado
 
     def eliminar_nodo(self, referencia):
         anterior, actual = self.buscar_con_anterior(referencia)
@@ -121,7 +125,7 @@ class ListaSimple:
         anterior.sig = actual.sig
         if actual == self.cola:
             self.cola = anterior
-        return True, f"Eliminado nodo: {actual.valor}", anterior, actual.sig
+        return True, f"Eliminado nodo: {actual.valor}", None, actual
 
     def eliminar_antes(self, referencia):
         if self.cabeza is None or self.cabeza.sig is None:
@@ -155,8 +159,8 @@ class ListaSimple:
         return (
             True,
             f"Eliminado antes de {referencia}: {anterior.valor}",
-            previo_de_anterior,
             actual,
+            anterior,
         )
 
     def eliminar_despues(self, referencia):
@@ -175,7 +179,7 @@ class ListaSimple:
             True,
             f"Eliminado después de {referencia}: {eliminado.valor}",
             actual,
-            actual.sig,
+            eliminado,
         )
 
 
@@ -242,10 +246,6 @@ class SimplesVisualizer(tk.Toplevel):
             row=1, column=8, padx=4, pady=6
         )
 
-        ttk.Button(controls, text="Regresar al menú", command=self.cerrar).grid(
-            row=1, column=0, columnspan=2, padx=4, pady=6, sticky="we"
-        )
-
         self.canvas = tk.Canvas(root_frame, bg="white", height=420)
         self.canvas.pack(fill="both", expand=True)
 
@@ -256,6 +256,15 @@ class SimplesVisualizer(tk.Toplevel):
         ttk.Label(
             root_frame, textvariable=self.punteros_var, font=("Consolas", 10)
         ).pack(fill="x")
+
+        button_frame = ttk.Frame(root_frame)
+        button_frame.pack(fill="x", pady=(8, 0))
+        ttk.Button(button_frame, text="Regresar al menú", command=self.cerrar).pack(
+            side="left", padx=4, pady=6
+        )
+        ttk.Button(button_frame, text="Cerrar Programa", command=self.cerrar_todo).pack(
+            side="left", padx=4, pady=6
+        )
 
     def obtener_valor(self):
         valor = self.valor_entry.get().strip()
@@ -273,6 +282,10 @@ class SimplesVisualizer(tk.Toplevel):
             return None
         return referencia
 
+    def limpiar_campos(self):
+        self.valor_entry.delete(0, tk.END)
+        self.ref_entry.delete(0, tk.END)
+
     def crear_lista(self):
         contenido = self.valor_entry.get().strip()
         self.lista.limpiar()
@@ -287,22 +300,25 @@ class SimplesVisualizer(tk.Toplevel):
             "T": self.lista.cola,
         }
         self.redibujar("Lista creada/reiniciada.")
+        self.limpiar_campos()
 
     def ejecutar_con_valor(self, fn):
         valor = self.obtener_valor()
         if valor is None:
             return
         ok, mensaje, p, q = fn(valor)
-        self.actualizar_punteros(p, q)
+        self.actualizar_punteros(q=p)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def ejecutar_con_referencia(self, fn):
         referencia = self.obtener_referencia()
         if referencia is None:
             return
         ok, mensaje, p, q = fn(referencia)
-        self.actualizar_punteros(p, q)
+        self.actualizar_punteros(q=q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def ejecutar_valor_y_referencia(self, fn):
         valor = self.obtener_valor()
@@ -310,8 +326,9 @@ class SimplesVisualizer(tk.Toplevel):
         if valor is None or referencia is None:
             return
         ok, mensaje, p, q = fn(referencia, valor)
-        self.actualizar_punteros(p, q)
+        self.actualizar_punteros(q=p, f=q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def insertar_inicio(self):
         self.ejecutar_con_valor(self.lista.insertar_inicio)
@@ -327,13 +344,15 @@ class SimplesVisualizer(tk.Toplevel):
 
     def eliminar_inicio(self):
         ok, mensaje, p, q = self.lista.eliminar_inicio()
-        self.actualizar_punteros(p, q)
+        self.actualizar_punteros(q=q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def eliminar_final(self):
         ok, mensaje, p, q = self.lista.eliminar_final()
-        self.actualizar_punteros(p, q)
+        self.actualizar_punteros(q=q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def eliminar_nodo(self):
         self.ejecutar_con_referencia(self.lista.eliminar_nodo)
@@ -344,10 +363,10 @@ class SimplesVisualizer(tk.Toplevel):
     def eliminar_despues(self):
         self.ejecutar_con_referencia(self.lista.eliminar_despues)
 
-    def actualizar_punteros(self, p, q):
-        self.punteros["P"] = p
+    def actualizar_punteros(self, q=None, f=None):
+        self.punteros["P"] = self.lista.cabeza
         self.punteros["Q"] = q
-        self.punteros["F"] = self.lista.cabeza
+        self.punteros["F"] = f
         self.punteros["T"] = self.lista.cola
 
     def redibujar(self, mensaje, exito=True):
@@ -426,3 +445,6 @@ class SimplesVisualizer(tk.Toplevel):
     def cerrar(self):
         self.destroy()
         self.on_close()
+
+    def cerrar_todo(self):
+        self.master.quit()

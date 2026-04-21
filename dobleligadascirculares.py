@@ -251,10 +251,6 @@ class DobleLigadasCircularesVisualizer(tk.Toplevel):
             row=1, column=8, padx=4, pady=6
         )
 
-        ttk.Button(controls, text="Regresar al menú", command=self.cerrar).grid(
-            row=1, column=0, columnspan=2, padx=4, pady=6, sticky="we"
-        )
-
         self.canvas = tk.Canvas(root_frame, bg="white", height=440)
         self.canvas.pack(fill="both", expand=True)
 
@@ -265,6 +261,15 @@ class DobleLigadasCircularesVisualizer(tk.Toplevel):
         ttk.Label(
             root_frame, textvariable=self.punteros_var, font=("Consolas", 10)
         ).pack(fill="x")
+
+        button_frame = ttk.Frame(root_frame)
+        button_frame.pack(fill="x", pady=(8, 0))
+        ttk.Button(button_frame, text="Regresar al menú", command=self.cerrar).pack(
+            side="left", padx=4, pady=6
+        )
+        ttk.Button(button_frame, text="Cerrar Programa", command=self.cerrar_todo).pack(
+            side="left", padx=4, pady=6
+        )
 
     def obtener_valor(self):
         valor = self.valor_entry.get().strip()
@@ -282,6 +287,10 @@ class DobleLigadasCircularesVisualizer(tk.Toplevel):
             return None
         return referencia
 
+    def limpiar_campos(self):
+        self.valor_entry.delete(0, tk.END)
+        self.ref_entry.delete(0, tk.END)
+
     def crear_lista(self):
         contenido = self.valor_entry.get().strip()
         self.lista.limpiar()
@@ -297,6 +306,7 @@ class DobleLigadasCircularesVisualizer(tk.Toplevel):
             "T": self.lista.cola,
         }
         self.redibujar("Lista creada/reiniciada.")
+        self.limpiar_campos()
 
     def ejecutar_con_valor(self, fn):
         valor = self.obtener_valor()
@@ -305,6 +315,7 @@ class DobleLigadasCircularesVisualizer(tk.Toplevel):
         ok, mensaje, p, q = fn(valor)
         self.actualizar_punteros(p, q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def ejecutar_con_referencia(self, fn):
         referencia = self.obtener_referencia()
@@ -313,6 +324,7 @@ class DobleLigadasCircularesVisualizer(tk.Toplevel):
         ok, mensaje, p, q = fn(referencia)
         self.actualizar_punteros(p, q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def ejecutar_valor_y_referencia(self, fn):
         valor = self.obtener_valor()
@@ -322,6 +334,7 @@ class DobleLigadasCircularesVisualizer(tk.Toplevel):
         ok, mensaje, p, q = fn(referencia, valor)
         self.actualizar_punteros(p, q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def insertar_inicio(self):
         self.ejecutar_con_valor(self.lista.insertar_inicio)
@@ -339,11 +352,13 @@ class DobleLigadasCircularesVisualizer(tk.Toplevel):
         ok, mensaje, p, q = self.lista.eliminar_inicio()
         self.actualizar_punteros(p, q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def eliminar_final(self):
         ok, mensaje, p, q = self.lista.eliminar_final()
         self.actualizar_punteros(p, q)
         self.redibujar(mensaje, ok)
+        self.limpiar_campos()
 
     def eliminar_nodo(self):
         self.ejecutar_con_referencia(self.lista.eliminar_nodo)
@@ -508,3 +523,6 @@ class DobleLigadasCircularesVisualizer(tk.Toplevel):
     def cerrar(self):
         self.destroy()
         self.on_close()
+
+    def cerrar_todo(self):
+        self.master.quit()
