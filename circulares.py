@@ -423,31 +423,40 @@ class CircularesVisualizer(tk.Toplevel):
             xh, yh = posiciones[nodos[0]]
             xt, yt = posiciones[nodos[-1]]
             self.canvas.create_line(
-                xt + ancho / 2,
-                yt + alto,
-                xt + ancho / 2,
+                xt + ancho,
+                yt + alto / 2,
+                xt + ancho + 30,
+                yt + alto / 2,
+                xt + ancho + 30,
                 yt + alto + 45,
-                xh + ancho / 2,
+                xh - 30,
                 yh + alto + 45,
-                xh + ancho / 2,
-                yh + alto,
-                smooth=True,
+                xh - 30,
+                yh + alto / 2,
+                xh,
+                yh + alto / 2,
                 width=2,
                 arrow=tk.LAST,
                 fill="#0891b2",
             )
         else:
             x1, y1 = posiciones[nodos[0]]
-            self.canvas.create_oval(
-                x1 + ancho - 20,
-                y1 - 20,
-                x1 + ancho + 20,
-                y1 + 20,
-                outline="#0891b2",
-                width=2,
-            )
             self.canvas.create_line(
-                x1 + ancho - 2, y1 + 8, x1 + ancho + 2, y1 + 12, fill="#0891b2", width=2
+                x1 + ancho,
+                y1 + alto / 2,
+                x1 + ancho + 30,
+                y1 + alto / 2,
+                x1 + ancho + 30,
+                y1 - 32,
+                x1 - 30,
+                y1 - 32,
+                x1 - 30,
+                y1 + alto / 2,
+                x1,
+                y1 + alto / 2,
+                fill="#0891b2",
+                width=2,
+                arrow=tk.LAST,
             )
 
         colores = {"P": "#7c3aed", "Q": "#b91c1c", "F": "#047857", "T": "#d97706"}
